@@ -83,9 +83,9 @@ class WeChatChannel(Channel):
             logger.info("message sent successfully")
             return
         # ignore message sent by self
-        if raw_msg["id2"] == self.personal_info["wx_id"]:
-            logger.info("message sent by self, ignore")
-            return
+        # if raw_msg["id2"] == self.personal_info["wx_id"]:
+        #     logger.info("message sent by self, ignore")
+        #     return
         msg = Message(raw_msg, self.personal_info)
         logger.info(f"message received: {msg}")
         e = PluginManager().emit(
@@ -102,8 +102,11 @@ class WeChatChannel(Channel):
         session_independent = conf().get("chat_group_session_independent")
         context = Context()
         context.session_id = msg.sender_id if session_independent else msg.room_id
-        if msg.is_at:
+        group_chat_target = conf().get("group_chat_target")
+        if msg.is_at or any(target in msg.content for target in group_chat_target):
             query = msg.content.replace(f"@{msg.receiver_name}", "", 1).strip()
+            for target in group_chat_target:
+                query = query.replace(target, "")
             context.query = query
             create_image_prefix = conf().get("create_image_prefix")
             match_prefix = check_prefix(query, create_image_prefix)
@@ -161,8 +164,14 @@ class WeChatChannel(Channel):
         )
         if e1.is_bypass:
             return self.send(e1.reply, e1.message)
-
+        
+        # Send dummy response
+        dummy_reply = Reply(ReplyType.TEXT, "收到，请稍等")
+        self.send(dummy_reply, msg)
+    
         rawReply = Bot().reply(e1.context)
+        
+        
 
         e2 = PluginManager().emit(
             Event(
