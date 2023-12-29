@@ -110,7 +110,9 @@ class WeChatChannel(Channel):
             context.query = query
             create_image_prefix = conf().get("create_image_prefix")
             match_prefix = check_prefix(query, create_image_prefix)
-            if match_prefix:
+            create_image_keywords = conf().get("create_image_keywords")
+            match_keyword = check_prefix(query, create_image_keywords)
+            if match_prefix or match_keyword:
                 context.type = ContextType.CREATE_IMAGE
             self.handle_reply(msg, context)
 
@@ -128,8 +130,9 @@ class WeChatChannel(Channel):
             if match_chat_prefix is not None:
                 query = query.replace(match_chat_prefix, "", 1).strip()
             else:
-                logger.info("your message is not start with single_chat_prefix, ignore")
-                return
+                # logger.info("your message is not start with single_chat_prefix, ignore")
+                # return
+                pass
         context.query = query
         create_image_prefix = conf().get("create_image_prefix")
         match_image_prefix = check_prefix(query, create_image_prefix)
@@ -166,8 +169,8 @@ class WeChatChannel(Channel):
             return self.send(e1.reply, e1.message)
         
         # Send dummy response
-        dummy_reply = Reply(ReplyType.TEXT, "收到，请稍等")
-        self.send(dummy_reply, msg)
+        # dummy_reply = Reply(ReplyType.TEXT, "收到，请稍等")
+        # self.send(dummy_reply, msg)
     
         rawReply = Bot().reply(e1.context)
         
